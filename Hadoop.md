@@ -1,6 +1,7 @@
 http://www.cloudera.com/documentation/enterprise/latest/topics/cdh_ig_cdh5_cluster_deploy.html     // 
 
 https://www.ibm.com/developerworks/cn/opensource/os-cn-hadoop-name-node/        //NN主备切换，经典 
+
 ## 1, HDFS
 
 namenode只能有两个，一个Active,一个Standby, 只有active NN才能对外提供读写服务。
@@ -80,7 +81,8 @@ ZKFailoverController : ZKFC , 它是一个zookeeper客户端，它同时监视/�
 http://www.cloudera.com/content/www/zh-CN/documentation/enterprise/5-3-x/topics/cdh_hag_hdfs_ha_enabling.html#topic_2_4_3_unique_3
 
 
-2, Zookeeper
+## 2, Zookeeper
+
 zookeeper分布式服务框架，它主要用来解决分布式应用经常遇到的一些数据管理的问题，如：统一命名服务，状态同步服务，分布式应用配置项的管理等。
 
 名称服务：将一个名称映射到与该名称有关联的一些信息的服务。
@@ -155,30 +157,39 @@ Cloudera Search 使用 ZooKeeper（通过 Apache Solr）集成了搜索功能与
 
 
 
-3, Hive 
-             Hive：数据仓库应用，你可以使用Hive QL访问你的数据
+## 3, Hive 
+            
+Hive：数据仓库应用，你可以使用Hive QL访问你的数据
+
 HiveServer2：Hive Server的改进版，它支持JDBC/ODBC Thrift API应用， 
 
 sudo service hive-server2 start/stop
+
 beeline： CLI工具
 
 /usr/lib/hive/bin/beeline
+
 beeline>!connect jdbc:hive2://localhost:10000
+
 show tables;
 
-4, impala
-http://www.cloudera.com/content/www/zh-CN/documentation/enterprise/5-3-x/topics/impala_proxy.html     //HA与代理配置 
+## 4, impala
+
+http://www.cloudera.com/content/www/zh-CN/documentation/enterprise/5-3-x/topics/impala_proxy.html    
+//HA与代理配置 
+
 impala statestore机制不包括代理与负载平衡功能。
 
 impala:分布式，大规模并行处理MPP数据库引擎，由不同的daemon进程组成。
 
 impalad daemon: 核心组件，运行在每个节点上，它从/向数据文件读取/写入，接受impala-shell指令，JDBC查询指令，分配工作到impala集群中的其它节点，将中间查询结果传回中央协调器节点。
-                              对于运行生产工作负载的群集，可以通过以循环调度样式，使用JDBC/ODBC接口提交每个查询到不同的impala daemon,以在节点之间平衡工作负载。impala daemon通过与statestore通信，以确认哪些节点正常运行并可接受新工作。
 
-impalad statestored: 检查集群众中所有节点的impala daemon运行情况，并持续转发其获取结果到各个daemon，仅需要在一个节点上运行些进程。
-                                  statestore目的是在出现问题时提供帮助，它不是集群至关重要的部分，如果statestored未运行，或无法访问，其它节点可以继续运行并在节点之间正常分配工作；如果statestore离线，则集群会越来越不坚固，当statestore重新联机后，会重新建立与其它节点间的通信并恢复其监控功能。
+对于运行生产工作负载的群集，可以通过以循环调度样式，使用JDBC/ODBC接口提交每个查询到不同的impala daemon,以在节点之间平衡工作负载。impala daemon通过与statestore通信，以确认哪些节点正常运行并可接受新工作。
 
-impalad catalogd：称为目录服务，将impala sql语句的元数据更改传到集群中的所有节点，只需在一个节点上使用此进程，可在同一个节点上运行staestored和catalogd服务。
+-  impalad statestored: 检查集群众中所有节点的impala daemon运行情况，并持续转发其获取结果到各个daemon，仅需要在一个节点上运行些进程。
+     statestore目的是在出现问题时提供帮助，它不是集群至关重要的部分，如果statestored未运行，或无法访问，其它节点可以继续运行并在节点之间正常分配工作；如果statestore离线，则集群会越来越不坚固，当statestore重新联机后，会重新建立与其它节点间的通信并恢复其监控功能。
+
+-  impalad catalogd：称为目录服务，将impala sql语句的元数据更改传到集群中的所有节点，只需在一个节点上使用此进程，可在同一个节点上运行staestored和catalogd服务。
 
 
 imapla的一个主要目标是使用hadoop上的SQL运行的更快更高效，impala可以访问由HIVE定义或加载的表，只要所有列使用impala支持的数据类型、文件格式和压缩编解码器。
@@ -186,11 +197,11 @@ imapla的一个主要目标是使用hadoop上的SQL运行的更快更高效，im
 查询优化程序： compute stats
 
 安装和配置hive metastore是impala的要求，如果没有metastore数据库，impala将无法工作，
-1，安装MYSQL
-2，下载mysql连接插件，并将其放在/usr/share/java/目录中
-3，为数据库使用合适的命令行工具以创建metastore数据库。
-4， 为数据库使用合适的命令行工具向hive用户授予metastore数据库的权限。
-5，修改hive-site.xml以包含与特定数据库匹配的信息。
+1.安装MYSQL
+2.下载mysql连接插件，并将其放在/usr/share/java/目录中
+3.为数据库使用合适的命令行工具以创建metastore数据库。
+4.为数据库使用合适的命令行工具向hive用户授予metastore数据库的权限。
+5.修改hive-site.xml以包含与特定数据库匹配的信息。
 
 
 
