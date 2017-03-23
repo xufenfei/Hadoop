@@ -41,7 +41,7 @@ ZKFC启动时会创建HealthMonitor和ActiveStandbyElector这两个主要内部�
  
 
 
-HealthMonitor 主要检测NN的两类状态，分别是HealthMonitor.State和HAServiceStatus，
+HealthMonitor 主要检测NN的两类状态，分别是<em> HealthMonitor.State </em> 和<em> HAServiceStatus </em> :
 
 HealthMonitor.State 是通过 HAServiceProtocol RPC 接口的 monitorHealth 方法来获取的，反映了 NameNode 节点的健康状况，主要是磁盘存储资源是否充足，有如下状态：
 
