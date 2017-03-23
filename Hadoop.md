@@ -263,29 +263,50 @@ yum install haproxy
 <code>
 
 global 
-    \# To have these messages end up in /var/log/haproxy.log you will 
-    \# need to: 
-    \# 
-    \# 1) configure syslog to accept network log events. This is done 
-    \# by adding the '-r' option to the SYSLOGD_OPTIONS in 
+    \# To have these messages end up in /var/log/haproxy.log you will
+    
+    \# need to:
+    
+    \#
+    
+    \# 1) configure syslog to accept network log events. This is done
+    
+    \# by adding the '-r' option to the SYSLOGD_OPTIONS in
+    
     \# /etc/sysconfig/syslog 
+    
+    \#
+    
+    \# 2) configure local2 events to go to the /var/log/haproxy.log
+    
+    \# file. A line like the following can be added to
+    
+    \# /etc/sysconfig/syslog
+    
+    \#
+    
+    \# local2.* /var/log/haproxy.log
+    
     \# 
-    \# 2) configure local2 events to go to the /var/log/haproxy.log 
-    \# file. A line like the following can be added to 
-    \# /etc/sysconfig/syslog 
-    \# 
-    \# local2.* /var/log/haproxy.log 
-    \# 
+    
     \log 127.0.0.1 local0 
+    
     \log 127.0.0.1 local1 notice 
-    \chroot /var/lib/haproxy 
+    
+    \chroot /var/lib/haproxy
+    
     \pidfile /var/run/haproxy.pid 
+    
     \maxconn 4000 
+    
     \user haproxy 
-    \group haproxy 
+    
+    \group haproxy
+    
     \daemon 
 
     \# turn on stats unix socket 
+    
     \#stats socket /var/lib/haproxy/stats 
 
 \#--------------------------------------------------------------------- 
@@ -296,48 +317,83 @@ global
 \#--------------------------------------------------------------------- 
 
 defaults 
-    mode http 
+    mode http
+    
     log global 
+    
     option httplog 
+    
     option dontlognull 
+    
     option http-server-close 
+    
     #option forwardfor except 127.0.0.0/8 
+    
     option redispatch 
+    
     retries 3 
+    
     maxconn 3000 
+    
     timeout connect 5000 
+    
     timeout client 50000 
+    
     timeout server 50000 
+    
 
-# 
-# This sets up the admin page for HA Proxy at port 25002. 
-# 
+\# 
+
+\# This sets up the admin page for HA Proxy at port 25002.
+
+\# 
+
+
 listen stats :25002 
-    balance 
-    mode http 
-    stats enable 
-    stats auth username:password 
 
-# This is the setup for Impala. Impala client connect to load_balancer_host:25003. 
-# HAProxy will balance connections among the list of servers listed below. 
-# The list of Impalad is listening at port 21000 for beeswax (impala-shell) or original ODBC driver. 
-# For JDBC or ODBC version 2.x driver, use port 21050 instead of 21000. 
-listen impala :25003 
+    balance 
+    
+    mode http 
+    
+    stats enable 
+    
+    stats auth username:password 
+    
+
+\# This is the setup for Impala. Impala client connect to load_balancer_host:25003. 
+
+\# HAProxy will balance connections among the list of servers listed below. 
+
+\# The list of Impalad is listening at port 21000 for beeswax (impala-shell) or original ODBC driver. 
+
+\# For JDBC or ODBC version 2.x driver, use port 21050 instead of 21000. 
+
+\listen impala :25003
+
     mode tcp 
+    
     option tcplog 
+    
     balance leastconn 
+    
     server cdhslave1 cdhslave1.yeahmobi.com:21050 check 
-    server cdhslave2 cdhslave2.yeahmobi.com:21050 check 
-    server cdhslave3 cdhslave3.yeahmobi.com:21050 check 
+    
+    server cdhslave2 cdhslave2.yeahmobi.com:21050 check
+    
+    server cdhslave3 cdhslave3.yeahmobi.com:21050 check
+    
 
 启动haproxy 
+
 haproxy -f /etc/haproxy/haproxy.cfg 
+
 关闭service haproxy stop 
 
 </code>
 
 
 impala配置 
+
 impala daemon group->advanced->Impala Daemon Command Line Argument Advanced Configuration Snippet (Safety Valve) 
 
 -principal=impala/cdhmaster.yeahmobi.com@YEAHMOBI.COM 
@@ -345,11 +401,13 @@ impala daemon group->advanced->Impala Daemon Command Line Argument Advanced Conf
 -be_principal=impala/_HOST@YEAHMOBI.COM 
 
 测试 
+
 private static final String IMPALAD_HOST = "cdhmaster.yeahmobi.com";//haproxy server的hostname 
 
 private static final String IMPALAD_JDBC_PORT = "25003";//端口选择haproxy的代理端口 
 
-private static final String CONNECTION_URL = "jdbc:hive2://" + IMPALAD_HOST + ':' + IMPALAD_JDBC_PORT + "/data_system;user=hive;password=111111";//ldap用户及密码 
+private static final String CONNECTION_URL = "jdbc:hive2://" + IMPALAD_HOST + ':' + IMPALAD_JDBC_PORT + "/data_system;user=hive;password=111111";
+//ldap用户及密码 
 
 
 使用时发现，impala-shell不好使了，不能正常连接，去除如上粗体步骤后，impala-shell正常，jdbc HAproxy也正常使用。
