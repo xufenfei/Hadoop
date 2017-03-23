@@ -5,25 +5,38 @@ https://www.ibm.com/developerworks/cn/opensource/os-cn-hadoop-name-node/        
 ## 1, HDFS
 
 namenode只能有两个，一个Active,一个Standby, 只有active NN才能对外提供读写服务。
+
 主备切换控制器ZKFailoverController：作为独立的进程运行，对NN的主备切换进行总体控制。
-ZKFailoverController能及时检测到NN的健康状况，在主NN故障时借助Zookeeper实现自动主备选举和切换，但也支持不依赖于zookeeper的手动主备切换。
+
+ZKFailoverController能及时检测到NN的健康状况，在主NN出现故障时借助Zookeeper实现自动主备选举和切换，但也支持不依赖于zookeeper的手动主备切换。
+
 Zookeeper集群：为主备切换控制器提供主备选举支持。
+
 共享存储系统：是实现NN高可用最为关键的部分，共享存储系统保存了NN在运行过程中所产生的HDFS的元数据，主NN与备NN通过共享存储实现元数据同步。在进行主备切换时，新的主NN在确认元数据完全同步之后才能继续对外提供服务。
 
 除了通过共享存储系统共享HDFS的元数据信息之外，主NN和备NN还需要共享HDFS的数据块和DataNode之间的映射关系，DN会同时向主NN和备NN上报数据块的位置信息。
 
 NN主备切换主要由ZKFC, HealthMonitor, ActiveStandbyElector这3个组件来协同实现。
-ZKFC启动时会创建HealthMonitor和ActiveStandbyElector这两个主要内部组件。
-HealthMonitor:主要负责检测nn的健康状态，如果检测到nn的状态发生变化，会回调ZKFC的相应方法进行自动主备选举。
-ActiveStandbyElector: 主要负责完成自动的主备选举，内部封装了zookeeper的处理逻辑，一是zookeeper主备选举完成，会回调ZKFC的相应方法来进行NameNode的主备状态切换。
 
-NN主备切换流程：
-HealthMonitor 初始化完成之后会启动内部的线程来定时调用对应 NameNode 的 HAServiceProtocol RPC 接口的方法，对 NameNode 的健康状态进行检测。
-HealthMonitor 如果检测到 NameNode 的健康状态发生变化，会回调 ZKFailoverController 注册的相应方法进行处理。
-如果 ZKFailoverController 判断需要进行主备切换，会首先使用 ActiveStandbyElector 来进行自动的主备选举。
-ActiveStandbyElector 与 Zookeeper 进行交互完成自动的主备选举。
-ActiveStandbyElector 在主备选举完成后，会回调 ZKFailoverController 的相应方法来通知当前的 NameNode 成为主 NameNode 或备 NameNode。
-ZKFailoverController 调用对应 NameNode 的 HAServiceProtocol RPC 接口的方法将 NameNode 转换为 Active 状态或 Standby 状态。
+ZKFC启动时会创建HealthMonitor和ActiveStandbyElector这两个主要内部组件。
+
+- HealthMonitor:主要负责检测nn的健康状态，如果检测到nn的状态发生变化，会回调ZKFC的相应方法进行自动主备选举。
+
+- ActiveStandbyElector: 主要负责完成自动的主备选举，内部封装了zookeeper的处理逻辑，一是zookeeper主备选举完成，会回调ZKFC的相应方法来进行NameNode的主备状态切换。
+
+<strong> NN主备切换流程：</strong>
+
+1. HealthMonitor 初始化完成之后会启动内部的线程来定时调用对应 NameNode 的 HAServiceProtocol RPC 接口的方法，对 NameNode 的健康状态进行检测。
+
+2. HealthMonitor 如果检测到 NameNode 的健康状态发生变化，会回调 ZKFailoverController 注册的相应方法进行处理。
+
+3. 如果 ZKFailoverController 判断需要进行主备切换，会首先使用 ActiveStandbyElector 来进行自动的主备选举。
+
+4. ActiveStandbyElector 与 Zookeeper 进行交互完成自动的主备选举。
+
+5. ActiveStandbyElector 在主备选举完成后，会回调 ZKFailoverController 的相应方法来通知当前的 NameNode 成为主 NameNode 或备 NameNode。
+
+6. ZKFailoverController 调用对应 NameNode 的 HAServiceProtocol RPC 接口的方法将 NameNode 转换为 Active 状态或 Standby 状态。
 
  
 
@@ -31,18 +44,25 @@ ZKFailoverController 调用对应 NameNode 的 HAServiceProtocol RPC 接口的�
 HealthMonitor 主要检测NN的两类状态，分别是HealthMonitor.State和HAServiceStatus，
 
 HealthMonitor.State 是通过 HAServiceProtocol RPC 接口的 monitorHealth 方法来获取的，反映了 NameNode 节点的健康状况，主要是磁盘存储资源是否充足，有如下状态：
+
 NITIALIZING：HealthMonitor 在初始化过程中，还没有开始进行健康状况检测；
+
 SERVICE_HEALTHY：NameNode 状态正常；
+
 SERVICE_NOT_RESPONDING：调用 NameNode 的 monitorHealth 方法调用无响应或响应超时；
+
 SERVICE_UNHEALTHY：NameNode 还在运行，但是 monitorHealth 方法返回状态不正常，磁盘存储资源不足；
+
 HEALTH_MONITOR_FAILED：HealthMonitor 自己在运行过程中发生了异常，不能继续检测 NameNode 的健康状况，会导致 ZKFailoverController 进程退出；
 
 
- HAServiceStatus 则是通过 HAServiceProtocol RPC 接口的 getServiceStatus 方法来获取的，主要反映的是 NameNode 的 HA 状态，包括：
-INITIALIZING：NameNode 在初始化过程中；
-ACTIVE：当前 NameNode 为主 NameNode；
-STANDBY：当前 NameNode 为备 NameNode；
-STOPPING：当前 NameNode 已停止；
+HAServiceStatus 则是通过 HAServiceProtocol RPC 接口的 getServiceStatus 方法来获取的，主要反映的是 NameNode 的 HA 状态，包括：
+
+- INITIALIZING：NameNode 在初始化过程中；
+- ACTIVE：当前 NameNode 为主 NameNode；
+- STANDBY：当前 NameNode 为备 NameNode；
+- STOPPING：当前 NameNode 已停止；
+
 HAServiceStatus 在状态检测之中只是起辅助的作用，在 HAServiceStatus 发生变化时，HealthMonitor 也会回调 ZKFailoverController 的相应方法来进行处理，
 
 
