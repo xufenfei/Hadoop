@@ -196,11 +196,16 @@ imapla的一个主要目标是使用hadoop上的SQL运行的更快更高效，im
 
 查询优化程序： compute stats
 
-安装和配置hive metastore是impala的要求，如果没有metastore数据库，impala将无法工作，
+安装和配置hive metastore是impala的要求，如果没有metastore数据库，impala将无法工作
+
 1.安装MYSQL
+
 2.下载mysql连接插件，并将其放在/usr/share/java/目录中
+
 3.为数据库使用合适的命令行工具以创建metastore数据库。
+
 4.为数据库使用合适的命令行工具向hive用户授予metastore数据库的权限。
+
 5.修改hive-site.xml以包含与特定数据库匹配的信息。
 
 
@@ -232,15 +237,26 @@ cat /etc/haproxy/haproxy.cfg
 25003 impala-shell连接此端口。
 25002  HA管理界面
 
+
 配置HA
-目的： 
-为impala jdbc提供统一的接口，作用参照http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/impala_proxy.html 
+
+目的： 为impala jdbc提供统一的接口，作用参照http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/impala_proxy.html 
 
 步骤： 
-安装haproxy 
+
+安装haproxy
+
 选择一台非impalad的机器安装haproxy 
+<code>
+
 yum install haproxy 
+
+</code>
+
 编辑/etc/haproxy/haproxy.cfg，参考 
+
+<code>
+
 global 
     # To have these messages end up in /var/log/haproxy.log you will 
     # need to: 
@@ -311,16 +327,27 @@ listen impala :25003
 启动haproxy 
 haproxy -f /etc/haproxy/haproxy.cfg 
 关闭service haproxy stop 
+
+</code>
+
+
 impala配置 
 impala daemon group->advanced->Impala Daemon Command Line Argument Advanced Configuration Snippet (Safety Valve) 
+
 -principal=impala/cdhmaster.yeahmobi.com@YEAHMOBI.COM 
+
 -be_principal=impala/_HOST@YEAHMOBI.COM 
+
 测试 
 private static final String IMPALAD_HOST = "cdhmaster.yeahmobi.com";//haproxy server的hostname 
+
 private static final String IMPALAD_JDBC_PORT = "25003";//端口选择haproxy的代理端口 
+
 private static final String CONNECTION_URL = "jdbc:hive2://" + IMPALAD_HOST + ':' + IMPALAD_JDBC_PORT + "/data_system;user=hive;password=111111";//ldap用户及密码 
 
+
 使用时发现，impala-shell不好使了，不能正常连接，去除如上粗体步骤后，impala-shell正常，jdbc HAproxy也正常使用。
+
 
 来源： http://blog.csdn.net/lookqlp/article/details/52096329
 
