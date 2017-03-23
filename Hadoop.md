@@ -198,15 +198,15 @@ imapla的一个主要目标是使用hadoop上的SQL运行的更快更高效，im
 
 安装和配置hive metastore是impala的要求，如果没有metastore数据库，impala将无法工作
 
-1.安装MYSQL
+1. 安装MYSQL
 
-2.下载mysql连接插件，并将其放在/usr/share/java/目录中
+2. 下载mysql连接插件，并将其放在/usr/share/java/目录中
 
-3.为数据库使用合适的命令行工具以创建metastore数据库。
+3. 为数据库使用合适的命令行工具以创建metastore数据库。
 
-4.为数据库使用合适的命令行工具向hive用户授予metastore数据库的权限。
+4. 为数据库使用合适的命令行工具向hive用户授予metastore数据库的权限。
 
-5.修改hive-site.xml以包含与特定数据库匹配的信息。
+5. 修改hive-site.xml以包含与特定数据库匹配的信息。
 
 
 
@@ -230,11 +230,16 @@ load balance for impala
 21000   应用连接端口
 21050   impala-shell连接端口
 
+
 yum install haproxy       (可以直接使用，在openldap.succez.com上测试过）
+
 cat /etc/haproxy/haproxy.cfg
+
 /usr/sbin/haproxy -f /etc/haproxy/haproxy.cfg
 
+
 25003 impala-shell连接此端口。
+
 25002  HA管理界面
 
 
@@ -258,37 +263,38 @@ yum install haproxy
 <code>
 
 global 
-    # To have these messages end up in /var/log/haproxy.log you will 
-    # need to: 
-    # 
-    # 1) configure syslog to accept network log events. This is done 
-    # by adding the '-r' option to the SYSLOGD_OPTIONS in 
-    # /etc/sysconfig/syslog 
-    # 
-    # 2) configure local2 events to go to the /var/log/haproxy.log 
-    # file. A line like the following can be added to 
-    # /etc/sysconfig/syslog 
-    # 
-    # local2.* /var/log/haproxy.log 
-    # 
-    log 127.0.0.1 local0 
-    log 127.0.0.1 local1 notice 
-    chroot /var/lib/haproxy 
-    pidfile /var/run/haproxy.pid 
-    maxconn 4000 
-    user haproxy 
-    group haproxy 
-    daemon 
+    \# To have these messages end up in /var/log/haproxy.log you will 
+    \# need to: 
+    \# 
+    \# 1) configure syslog to accept network log events. This is done 
+    \# by adding the '-r' option to the SYSLOGD_OPTIONS in 
+    \# /etc/sysconfig/syslog 
+    \# 
+    \# 2) configure local2 events to go to the /var/log/haproxy.log 
+    \# file. A line like the following can be added to 
+    \# /etc/sysconfig/syslog 
+    \# 
+    \# local2.* /var/log/haproxy.log 
+    \# 
+    \log 127.0.0.1 local0 
+    \log 127.0.0.1 local1 notice 
+    \chroot /var/lib/haproxy 
+    \pidfile /var/run/haproxy.pid 
+    \maxconn 4000 
+    \user haproxy 
+    \group haproxy 
+    \daemon 
 
-    # turn on stats unix socket 
-    #stats socket /var/lib/haproxy/stats 
+    \# turn on stats unix socket 
+    \#stats socket /var/lib/haproxy/stats 
 
-#--------------------------------------------------------------------- 
-# common defaults that all the 'listen' and 'backend' sections will 
-# use if not designated in their block 
-# 
-# You might need to adjust timing values to prevent timeouts. 
-#--------------------------------------------------------------------- 
+\#--------------------------------------------------------------------- 
+\# common defaults that all the 'listen' and 'backend' sections will 
+\# use if not designated in their block 
+\# 
+\# You might need to adjust timing values to prevent timeouts. 
+\#--------------------------------------------------------------------- 
+
 defaults 
     mode http 
     log global 
